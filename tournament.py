@@ -5,6 +5,7 @@
 
 import psycopg2
 
+
 def connect(database_name="tournament"):
     """Connect to the PostgreSQL database.
     Returns a database connection and the cursor.
