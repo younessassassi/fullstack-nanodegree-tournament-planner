@@ -6,11 +6,21 @@ CREATE DATABASE tournament;
 
 -- player table
 CREATE TABLE player ( id SERIAL PRIMARY KEY,
-					  full_name VARCHAR(40) NOT NULL,
-					  games_played INTEGER DEFAULT 0,
-					  wins INTEGER DEFAULT 0);
+					  full_name VARCHAR(40) NOT NULL);
 
--- game table
-CREATE TABLE match ( winner_id INTEGER REFERENCES player(id),
-				   	 loser_id INTEGER REFERENCES player(id),
-				   	 CONSTRAINT game_key PRIMARY KEY (winner_id, loser_id));
+-- match table
+CREATE TABLE match ( id SERIAL,
+					 winner INTEGER REFERENCES player(id),
+					 loser INTEGER REFERENCES player(id),
+				   	 CONSTRAINT game_key PRIMARY KEY (winner, loser));
+
+-- matches table
+CREATE TABLE matches ( id INTEGER REFERENCES player(id) PRIMARY KEY,
+					   matches_played INTEGER DEFAULT 0,
+					   wins INTEGER DEFAULT 0);
+
+-- ranking view
+CREATE VIEW standings AS SELECT player.id, player.full_name, matches.wins , matches.matches_played
+					   FROM player LEFT JOIN matches
+					   ON player.id = matches.id
+					   ORDER BY matches.wins DESC;

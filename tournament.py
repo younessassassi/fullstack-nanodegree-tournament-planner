@@ -21,7 +21,7 @@ def connect(database_name="tournament"):
 def deleteMatches():
     """Remove all the match records from the database."""
     db, cursor = connect()
-    cursor.execute("TRUNCATE match CASCADE;")
+    cursor.execute("TRUNCATE matches CASCADE;")
     db.commit()
     db.close()
 
@@ -53,9 +53,16 @@ def registerPlayer(name):
       name: the player's full name.
     """
     db, cursor = connect()
-    query = 'INSERT INTO player (full_name) VALUES (%s);'
+    query = 'INSERT INTO player (full_name) VALUES (%s)  RETURNING id;'
     param = (name,)
     cursor.execute(query, param)
+
+    player_id = cursor.fetchone()[0]
+
+    query = 'INSERT INTO matches (id) VALUES (%s);'
+    param = (player_id,)
+    cursor.execute(query, param)
+
     db.commit()
     db.close()
 
@@ -74,9 +81,7 @@ def playerStandings():
         matches: the number of matches the player has played
     """
     db, cursor = connect()
-    query = """SELECT id, full_name as name, wins, games_played as matches
-               FROM player ORDER BY wins DESC, matches DESC;
-            """
+    query = 'SELECT * from standings;'
     cursor.execute(query)
     result = cursor.fetchall()
     db.close()
@@ -92,20 +97,23 @@ def reportMatch(winner, loser):
     """
     db, cursor = connect()
 
-    """create game record"""
-    query = 'INSERT INTO match VALUES (%s, %s);'
-    params = (winner, loser,)
+    """create match record"""
+    query = 'INSERT INTO match (winner, loser) VALUES (%s, %s);'
+    params = (winner, loser)
     cursor.execute(query, params)
 
-    """update winner game record"""
-    query = """UPDATE player SET games_played = games_played + 1,
-               wins = wins + 1 WHERE id = %s;
+    """update match winner record"""
+
+    query = """UPDATE matches SET matches_played = matches_played + 1,
+            wins = wins + 1 WHERE id = %s;
             """
     param = (winner,)
     cursor.execute(query, param)
 
-    """update loser game count"""
-    query = 'UPDATE player SET games_played = games_played + 1 WHERE id = %s;'
+    """update match loser record"""
+    query = """UPDATE matches SET matches_played = matches_played + 1
+            WHERE id = %s;
+            """
     param = (loser,)
     cursor.execute(query, param)
 
